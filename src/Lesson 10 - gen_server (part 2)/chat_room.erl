@@ -11,8 +11,8 @@
 
 
 -record (state, {
-    users = maps:new(),
-    user_pids = maps:new(),
+    users :: map(),
+    user_pids :: map(),
     history = [] :: [message()]
 }).
 
@@ -53,7 +53,7 @@ get_history(Pid) ->
 % gen_server API
 
 init([]) ->
-    {ok, #state{}}.
+    {ok, #state{users = maps:new(), user_pids = maps:new()}}.
 
 
 handle_call({remove_user, User_pid}, _From, #state{users = Users, user_pids = User_pids} = State) ->
