@@ -42,5 +42,5 @@ terminate(_Reason, _State) ->
     ok.
 
 
-code_change(_OldVsn, _Extra, State) ->
+code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
