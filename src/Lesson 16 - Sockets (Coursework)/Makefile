@@ -5,7 +5,7 @@ build:
 	erlc -o ebin src/*.erl test/*.erl
 
 run:
-	erl -pa ebin -s mcache_app start
+	erl -config mcache.config -pa ebin -s mcache_app start
 
 clean:
 	-rm ebin/*.beam

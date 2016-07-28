@@ -3,7 +3,7 @@
     {vsn, "0.1.0"},
     {modules, [mcache_app, mcache_sup, mcache_worker, memcache]},
     {registered, [mcache_sup, mcache_worker, memcache]},
-    {applications, [kernel, stdlib]},
+    {applications, [kernel, stdlib, mnesia]},
     {mod, {mcache_app, []}},
     {env, [
         {port, 1234},
