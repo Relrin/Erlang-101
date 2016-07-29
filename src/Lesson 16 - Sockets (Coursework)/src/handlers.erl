@@ -34,16 +34,28 @@ handle_connection(WorkerId, ListenSocket, Socket) ->
 
 get_handler_args(Message) ->
     case binary:split(Message, <<" ">>) of
-        [<<"GET">>, Data] -> ok;
-        [<<"GETS">>, Data] -> ok;
-        [<<"ADD">>, Data] -> ok;
-        [<<"SET">>, Data] -> ok;
-        [<<"REPLACE">>, Data] -> ok;
-        [<<"APPEND">>, Data] -> ok;
-        [<<"PREPEND">>, Data] -> ok;
-        [<<"DELETE">>, Data] -> ok;
+        % [<<"GET">>, Data] -> ok;
+        % [<<"GETS">>, Data] -> ok;
+        % [<<"ADD">>, Data] -> ok;
+        [<<"SET">>, Data] -> get_key_value(set, Data);
+        % [<<"REPLACE">>, Data] -> ok;
+        % [<<"APPEND">>, Data] -> ok;
+        % [<<"PREPEND">>, Data] -> ok;
+        % [<<"DELETE">>, Data] -> ok;
         _ -> unknown
     end.
+
+
+get_key_value(Action, Data) ->
+    case binary:split(Data, <<" ">>) of
+        [Key, Value] -> {Action, Key, Value};
+        _ -> unknown
+    end.
+
+
+handle({set, Key, Value}) ->
+    memcache:set(Key, Value),
+    <<"STORED">>;
 
 
 handle(unknown) ->
