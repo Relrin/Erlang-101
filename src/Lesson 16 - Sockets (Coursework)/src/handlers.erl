@@ -34,14 +34,14 @@ handle_connection(WorkerId, ListenSocket, Socket) ->
 
 get_handler_args(Message) ->
     case binary:split(Message, <<" ">>) of
-        % [<<"GET">>, Data] -> ok;
-        % [<<"GETS">>, Data] -> ok;
-        % [<<"ADD">>, Data] -> ok;
+        [<<"GET">>, Key] -> {get, Key};
+        [<<"GETS">>, Keys] -> {gets, binary:split(Keys, <<" ">>, [global])};
+        [<<"ADD">>, Data] -> get_key_value(add, Data);
         [<<"SET">>, Data] -> get_key_value(set, Data);
-        % [<<"REPLACE">>, Data] -> ok;
-        % [<<"APPEND">>, Data] -> ok;
-        % [<<"PREPEND">>, Data] -> ok;
-        % [<<"DELETE">>, Data] -> ok;
+        [<<"REPLACE">>, Data] -> get_key_value(replace, Data);
+        [<<"APPEND">>, Data] -> get_key_value(append, Data);
+        [<<"PREPEND">>, Data] -> get_key_value(prepend, Data);
+        [<<"DELETE">>, Key] -> {delete, Key};
         _ -> unknown
     end.
 
@@ -56,6 +56,63 @@ get_key_value(Action, Data) ->
 handle({set, Key, Value}) ->
     memcache:set(Key, Value),
     <<"STORED">>;
+
+
+handle({get, Key}) ->
+    case memcache:get(Key) of
+        {ok, Value} -> <<"VALUE ", Key/binary, " ", Value/binary, "\r\nEND">>;
+        {error, not_found} -> <<"NOT FOUND">>
+    end;
+
+
+handle({gets, Keys}) ->
+    Values = memcache:gets(Keys),
+    {[], Result} = lists:foldl(
+        fun(Response, {[Key | Rest], Acc}) ->
+                Value = case Response of
+                    {ok, Val} -> Val;
+                    {error, not_found} -> <<"NOT FOUND">>
+                end,
+                {Rest, <<Acc/binary, "VALUE ", Key/binary, " ", Value/binary, "\r\n">>}
+        end,
+        {Keys, <<>>}, Values
+    ),
+    <<Result/binary, "END">>;
+
+
+handle({add, Key, Value}) ->
+    case memcache:add(Key, Value) of
+        ok -> <<"STORED">>;
+        {error, exists} -> <<"EXISTS">>
+    end;
+
+
+handle({replace, Key, Value}) ->
+    case memcache:replace(Key, Value) of
+        ok -> <<"STORED">>;
+        {error, not_found} -> <<"NOT FOUND">>
+    end;
+
+
+handle({append, Key, Value}) ->
+    case memcache:append(Key, Value) of
+        ok -> <<"STORED">>;
+        {error, not_found} -> <<"NOT FOUND">>
+    end;
+
+
+handle({prepend, Key, Value}) ->
+    case memcache:prepend(Key, Value) of
+        ok -> <<"STORED">>;
+        {error, not_found} -> <<"NOT FOUND">>
+    end;
+
+
+handle({delete, Key}) ->
+    case memcache:delete(Key) of
+        ok -> <<"DELETED">>;
+        {error, not_found} -> <<"NOT FOUND">>
+    end;
 
 
 handle(unknown) ->
